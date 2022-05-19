@@ -1,4 +1,5 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { NOTFOUND } from "dns";
 import { PrismaService } from "src/prisma/prisma.service";
 import { CreateTableDto } from "./dto/create-table.dto";
 import { UpdateTableDto } from "./dto/update-table.dto";
@@ -9,8 +10,14 @@ export class TableService{
 
   constructor(private readonly prisma:PrismaService){}
 
-  findOne(id: string): Promise<Table> {
-    return this.prisma.table.findUnique({ where: { id } })
+  async findOne(id: string): Promise<Table> {
+    const record = await this.prisma.table.findUnique({ where: { id } });
+
+    if(!record){
+      throw new NotFoundException(`Registro com ID '${id}' não encontrado.`)
+    }
+
+    return record
   }
 
   findAll(): Promise<Table[]> {
