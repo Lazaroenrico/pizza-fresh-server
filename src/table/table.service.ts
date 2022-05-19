@@ -1,26 +1,26 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
-import { NOTFOUND } from "dns";
-import { PrismaService } from "src/prisma/prisma.service";
-import { CreateTableDto } from "./dto/create-table.dto";
-import { UpdateTableDto } from "./dto/update-table.dto";
-import { Table } from "./entities/table.estity";
+import {
+  Injectable,
+  NotFoundException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
+import { NOTFOUND } from 'dns';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { CreateTableDto } from './dto/create-table.dto';
+import { UpdateTableDto } from './dto/update-table.dto';
+import { Table } from './entities/table.estity';
 
 @Injectable()
-export class TableService{
+export class TableService {
+  constructor(private readonly prisma: PrismaService) {}
 
-  constructor(private readonly prisma:PrismaService){}
-
-
-
-  async findById(id: string): Promise<Table>{
-
+  async findById(id: string): Promise<Table> {
     const record = await this.prisma.table.findUnique({ where: { id } });
 
-    if(!record){
-      throw new NotFoundException(`Registro com ID '${id}' não encontrado.`)
+    if (!record) {
+      throw new NotFoundException(`Registro com ID '${id}' não encontrado.`);
     }
 
-    return record
+    return record;
   }
 
   async findOne(id: string): Promise<Table> {
@@ -33,25 +33,33 @@ export class TableService{
 
   async update(id: string, dto: UpdateTableDto): Promise<Table> {
     await this.findById(id);
-    const data: Partial<Table> = { ...dto }
+    const data: Partial<Table> = { ...dto };
 
-   return this.prisma.table.update({
-     where: { id },
-     data
-   });
+    return this.prisma.table
+      .update({
+        where: { id },
+        data,
+      })
+      .catch(this.handleError);
   }
 
   create(dto: CreateTableDto): Promise<Table> {
-    const data: Table = { ...dto }
+    const data: Table = { ...dto };
 
-    return this.prisma.table.create({ data });
+    return this.prisma.table.create({ data }).catch(this.handleError);
   }
 
   async delete(id: string) {
     await this.findById(id);
 
-   await this.prisma.table.delete({ where: { id }});
+    await this.prisma.table.delete({ where: { id } });
   }
 
+  handleError(error: Error): undefined {
+    const errorLines = error.message?.split('\n');
+    const lastErrorLine = errorLines[errorLines.length - 1]?.trim();
+    throw new UnprocessableEntityException(
+      lastErrorLine || 'Alguem erro ocorreu ao executar a operação',
+    );
+  }
 }
-
