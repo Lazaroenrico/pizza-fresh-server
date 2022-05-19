@@ -6,8 +6,8 @@ import { Table } from "./entities/table.estity";
 
 @Injectable()
 export class TableService{
-  constructor(private readonly prisma:PrismaService){}
 
+  constructor(private readonly prisma:PrismaService){}
 
   findOne(id: string): Promise<Table> {
     return this.prisma.table.findUnique({ where: { id } })
@@ -26,11 +26,14 @@ export class TableService{
    });
   }
 
-
   create(dto: CreateTableDto): Promise<Table> {
     const data: Table = { ...dto }
 
     return this.prisma.table.create({ data });
+  }
+
+  async delete(id: string) {
+   await this.prisma.table.delete({ where: { id }});
   }
 
 }
